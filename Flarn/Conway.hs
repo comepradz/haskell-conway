@@ -35,6 +35,7 @@ module Flarn.Conway (
   ) where
 
 import qualified Data.Array.Unboxed as Arr
+import qualified Control.Parallel.Strategies as P
 
 type LifeGridData = Arr.UArray (Int, Int) Bool
 type LifeCycleFunction = Bool -> Int -> Bool
@@ -42,7 +43,10 @@ type Cell = ((Int, Int), Bool)
 data LifeGrid = LifeGrid Bool LifeCycleFunction LifeGridData
 
 instance Show LifeGrid where
-  show = showGrid
+  show = reverse . tail . reverse . showGrid
+
+pDM :: P.NFData b => (a -> b) -> [a] -> [b]
+pDM = P.parMap P.rdeepseq
 
 b3s23 :: Bool -> Int -> Bool
 b3s23 s n
@@ -68,11 +72,12 @@ gridSize (LifeGrid _ _ d) = (xbound + 1, ybound + 1)
     ybound = snd . snd $ Arr.bounds d
 
 showGrid :: LifeGrid -> String
-showGrid g@(LifeGrid _ _ d) = unlines [line i | i <- Arr.range (0, height -1)]
+showGrid g@(LifeGrid _ _ d) = unlines allLines
   where
     height = snd $ gridSize g
     charFor b = if b then '*' else ' '
     items = Arr.assocs d
+    allLines = pDM line $ Arr.range (0, height -1)
     line n = map (\p -> charFor $ snd p) $ filter (\p -> ((snd . fst $ p) == n)) items
 
 mergeCells :: LifeGrid -> [((Int, Int), Bool)] -> LifeGrid
@@ -118,8 +123,9 @@ lifeCycle g@(LifeGrid w f d) = nextGrid : (lifeCycle nextGrid)
   where
     nextGrid = LifeGrid w f newData
     newData = Arr.array (Arr.bounds d) newContent
-    newContent = [(i, f v $ liveNeighbourCount g x y) |
-                  (i@(x,y),v) <- Arr.assocs d]
+    newContent = pDM (\(i@(x,y),v) -> (i, f v $ liveNeighbourCount g x y)) $
+                     Arr.assocs d
+
 
 gliderSW :: [Cell]
 gliderSW = [((1,0), True),

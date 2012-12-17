@@ -29,4 +29,4 @@ main = do
   let grids = lifeCycle filled
   putStr cls
 --  putStr (show filled)
-  forM_ (map (topleft ++) (map (reverse . tail . reverse . show) grids)) putStr
+  forM_ (map (topleft ++) (map show grids)) putStr
