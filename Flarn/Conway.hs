@@ -21,12 +21,24 @@ module Flarn.Conway (
   , birthCell
   , killCell
   , lifeCycle
+  , gliderSW
+  , moveCells
+  , block
+  , blinkerV
+  , blinkerH
+  , beaconFull
+  , beaconEmpty
+  , toCells
+  , toadH
+  , blockLayingSwitchEngine
+  , blockLayingSwitchEngine2
   ) where
 
 import qualified Data.Array.Unboxed as Arr
 
 type LifeGridData = Arr.UArray (Int, Int) Bool
 type LifeCycleFunction = Bool -> Int -> Bool
+type Cell = ((Int, Int), Bool)
 data LifeGrid = LifeGrid Bool LifeCycleFunction LifeGridData
 
 instance Show LifeGrid where
@@ -109,3 +121,56 @@ lifeCycle g@(LifeGrid w f d) = nextGrid : (lifeCycle nextGrid)
     newContent = [(i, f v $ liveNeighbourCount g x y) |
                   (i@(x,y),v) <- Arr.assocs d]
 
+gliderSW :: [Cell]
+gliderSW = [((1,0), True),
+            ((2,1), True),
+            ((0,2), True),
+            ((1,2), True),
+            ((2,2), True)]
+
+moveCells :: (Int, Int) -> [Cell] -> [Cell]
+moveCells (x, y) = map moveCell
+  where
+    moveCell ((x', y'), v) = (((x + x'), (y + y')), v)
+
+block :: [Cell]
+block = [((0, 0), True),
+         ((0, 1), True),
+         ((1, 0), True),
+         ((1, 1), True)]
+
+blinkerV :: [Cell]
+blinkerV = [((0, 0), True),
+            ((0, 1), True),
+            ((0, 2), True)]
+
+blinkerH :: [Cell]
+blinkerH = [((0, 0), True),
+            ((1, 0), True),
+            ((2, 0), True)]
+
+beaconFull :: [Cell]
+beaconFull = block ++ (moveCells (2,2) block)
+
+beaconEmpty :: [Cell]
+beaconEmpty = filter okay beaconFull
+  where
+    okay (i,_)
+      | i == (1,1) = False
+      | i == (2,2) = False
+      | otherwise = True
+
+toCells :: String -> [Cell]
+toCells s = concat . map cellLine $ numberedlines
+  where
+    numberedlines = zip [0..] $ lines s
+    cellLine (l,s') = map (\(x,c) -> ((x,l),c == '*')) $ zip [0..] s'
+
+toadH :: [Cell]
+toadH = toCells " ***\n*** "
+
+blockLayingSwitchEngine :: [Cell]
+blockLayingSwitchEngine = toCells "           * *\n**        *\n**         *  *\n             ***"
+
+blockLayingSwitchEngine2 :: [Cell]
+blockLayingSwitchEngine2 = toCells "*** *\n*    \n   **\n ** *\n* * *"

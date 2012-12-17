@@ -1,6 +1,7 @@
 module Main (main) where
 
-import Control.Monad (forM_)
+import System.Environment (getEnv)
+import Control.Monad (liftM, forM_)
 
 import Flarn.Conway
 
@@ -13,14 +14,19 @@ cls = csi ++ "?25l" ++ csi ++ "2J"
 topleft :: String
 topleft = csi ++ "1;1H"
 
+ttyLines :: IO Int
+ttyLines = liftM read $ getEnv "LINES"
+
+columns :: IO Int
+columns = liftM read $ getEnv "COLUMNS"
+
 main :: IO ()
 main = do
-  let empty = newGrid 60 20 True b3s23
-  let glider = mergeCells empty [((1,0), True),
-                                 ((2,1), True),
-                                 ((0,2), True),
-                                 ((1,2), True),
-                                 ((2,2), True)]
-  let grids = lifeCycle glider
+  width <- columns
+  height <- ttyLines
+  let empty = newGrid width height True b3s23
+  let filled = mergeCells empty $ moveCells (20, 10) blockLayingSwitchEngine2
+  let grids = lifeCycle filled
   putStr cls
-  forM_ (map (topleft ++) (map show grids)) putStr
+--  putStr (show filled)
+  forM_ (map (topleft ++) (map (reverse . tail . reverse . show) grids)) putStr
