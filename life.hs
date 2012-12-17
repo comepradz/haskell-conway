@@ -25,8 +25,11 @@ main = do
   width <- columns
   height <- ttyLines
   let empty = newGrid width height True b3s23
-  let filled = mergeCells empty $ moveCells (20, 10) blockLayingSwitchEngine2
+  let filled = mergeCells empty $ moveCells (20, 10) blockLayingSwitchEngine
   let grids = lifeCycle filled
   putStr cls
---  putStr (show filled)
-  forM_ (map (topleft ++) (map show grids)) putStr
+
+  forM_ grids $ \grid -> do
+    putStr topleft
+    putStr . show $ grid
+    
