@@ -180,3 +180,4 @@ blockLayingSwitchEngine = toCells "           * *\n**        *\n**         *  *\
 
 blockLayingSwitchEngine2 :: [Cell]
 blockLayingSwitchEngine2 = toCells "*** *\n*    \n   **\n ** *\n* * *"
+

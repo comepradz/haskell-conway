@@ -32,4 +32,4 @@ main = do
   forM_ grids $ \grid -> do
     putStr topleft
     putStr . show $ grid
-    
+
